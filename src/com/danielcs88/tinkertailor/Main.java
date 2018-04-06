@@ -4,11 +4,13 @@ public class Main {
 
     public static void main(String[] args) {
         Game game = Game.getInstance();
-        CircleList<String> test = new CircleList<>();
+        CircleList<Integer> test = new CircleList<>();
         for (int i = 10; i > 0; i--) {
-            test.add(String.valueOf(i));
+            test.add(i);
         }
-        String result = game.playTinkerTailor(test, 7);
+        Integer result = game.playTinkerTailor(test, 7);
         System.out.println("\nAnd the winner is: " + result);
+        test.clear();
+        System.out.println("Content: " + test);
     }
 }

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.function.Consumer;
 
 public class CircleList <E> implements List<E> {
 
@@ -104,10 +105,22 @@ public class CircleList <E> implements List<E> {
 
     @Override
     public void clear() {
-
+        Iterator<E> iter = iterator();
+        while (iter.hasNext()) {
+            iter.remove();
+        }
     }
 
-    private Iterator<E> roll(int index) {
+    @Override
+    public void forEach(Consumer<? super E> action) {
+        Node<E> currentElement = top;
+        for (int i = 0; i < size; i++) {
+            action.accept(currentElement.getElem());
+            currentElement = currentElement.getNext();
+        }
+    }
+
+    private Iterator<E> setIteratorToIndex(int index) {
         Iterator<E> iter = iterator();
         for (int i = 0; i < index; i++) {
             iter.next();
@@ -118,14 +131,14 @@ public class CircleList <E> implements List<E> {
     @Override
     public E get(int index) {
         if (size == 0) return null;
-        Iterator<E> iter = roll(index);
+        Iterator<E> iter = setIteratorToIndex(index);
         return iter.next();
     }
 
     @Override
     public E set(int index, E element) {
         if (size == 0) return null;
-        Iterator<E> iter = roll(index);
+        Iterator<E> iter = setIteratorToIndex(index);
         ((CircleIterator)iter).set(element);
         return element;
     }
@@ -138,7 +151,7 @@ public class CircleList <E> implements List<E> {
     @Override
     public E remove(int index) {
         if (size == 0) return null;
-        Iterator<E> iter = roll(index);
+        Iterator<E> iter = setIteratorToIndex(index);
         iter.remove();
         size --;
         return null; // FIX THIS
@@ -205,12 +218,17 @@ public class CircleList <E> implements List<E> {
         @Override
         public void remove() {
             size --;
+            /*
+            FIX THIS SHIT
+             */
             if (current.getNext() == null) {
                 top = null;
+                current = null;
                 return;
             }
             if (current.getNext() == current.getPrev()) {
                 top = current.getNext();
+                current = null;
                 return;
             }
             current.getPrev().setNext(current.getNext());

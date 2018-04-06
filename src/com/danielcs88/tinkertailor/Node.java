@@ -1,5 +1,7 @@
 package com.danielcs88.tinkertailor;
 
+import java.util.function.Consumer;
+
 class Node<T> {
 
     private T elem;
@@ -33,4 +35,5 @@ class Node<T> {
     void setPrev(Node<T> prev) {
         this.prev = prev;
     }
+
 }
