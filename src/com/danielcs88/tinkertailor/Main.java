@@ -7,13 +7,29 @@ public class Main {
 
     public static void main(String[] args) {
         List<Integer> test = new CircleList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 5; i > 0; i--) {
             test.add(i);
         }
-        System.out.println("Size: " + test.size() + "\n");
+        System.out.println(test);
         Iterator<Integer> iter = test.iterator();
-        for (int i = 0; i < 20; i++) {
-            System.out.println(iter.next());
-        }
+        iter.next();
+        iter.next();
+        iter.remove();
+        System.out.println(test);
+        iter.next();
+        iter.next();
+        iter.next();
+        iter.remove();
+        System.out.println(test);
+        iter.next();
+        iter.next();
+        iter.next();
+        iter.remove();
+        System.out.println(test);
+        iter.next();
+        iter.next();
+        iter.next();
+        iter.remove();
+        System.out.println(test);
     }
 }

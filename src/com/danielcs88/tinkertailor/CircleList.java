@@ -8,8 +8,8 @@ import java.util.ListIterator;
 public class CircleList <E> implements List<E> {
 
     private int size;
-    private Node<E> head;
-    private Node<E> tail;
+    private Node<E> top;
+    private Node<E> bottom;
 
     @Override
     public int size() {
@@ -44,20 +44,20 @@ public class CircleList <E> implements List<E> {
     @Override
     public boolean add(E elem) {
         Node<E> newNode = new Node<>(elem);
-        if (head == null) {
-            tail = newNode;
+        if (top == null) {
+            bottom = newNode;
         } else {
-            newNode.setNext(head);
-            head.setPrev(newNode);
-            if (head.getNext() == null) {
-                newNode.setPrev(head);
-                head.setNext(newNode);
+            newNode.setNext(top);
+            top.setPrev(newNode);
+            if (top.getNext() == null) {
+                newNode.setPrev(top);
+                top.setNext(newNode);
             } else {
-                newNode.setPrev(tail);
-                tail.setNext(newNode);
+                newNode.setPrev(bottom);
+                bottom.setNext(newNode);
             }
         }
-        head = newNode;
+        top = newNode;
         size ++;
         return true;
     }
@@ -140,6 +140,7 @@ public class CircleList <E> implements List<E> {
         if (size == 0) return null;
         Iterator<E> iter = roll(index);
         iter.remove();
+        size --;
         return null; // FIX THIS
     }
 
@@ -168,9 +169,21 @@ public class CircleList <E> implements List<E> {
         return null;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("[");
+        Iterator<E> iter = iterator();
+        for (int i = 0; i < size; i++) {
+            sb.append(iter.next());
+            if (i != size - 1) sb.append(", ");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
     private final class CircleIterator implements Iterator<E> {
 
-        private Node<E> current = head;
+        private Node<E> current = top;
 
         @Override
         public boolean hasNext() {
@@ -180,15 +193,8 @@ public class CircleList <E> implements List<E> {
         @Override
         public E next() {
             if (current == null) return null;
-            E retval = current.getElem();
-            current = current.getNext();
-            return retval;
-        }
-
-        public E prev() {
-            if (current == null) return null;
             E retVal = current.getElem();
-            current = current.getPrev();
+            current = current.getNext();
             return retVal;
         }
 
@@ -198,17 +204,21 @@ public class CircleList <E> implements List<E> {
 
         @Override
         public void remove() {
+            size --;
             if (current.getNext() == null) {
-                head = null;
+                top = null;
                 return;
             }
             // MAY THROW ERROR!
             if (current.getNext() == current.getPrev()) {
-                head = current.getNext();
+                top = current.getNext();
                 return;
             }
             current.getPrev().setNext(current.getNext());
             current.getNext().setPrev(current.getPrev());
+            if (current == top) {top = current.getNext();}
+            if (current == bottom) {bottom = current.getPrev();}
+            current = current.getPrev();
         }
     }
 }
