@@ -209,7 +209,6 @@ public class CircleList <E> implements List<E> {
                 top = null;
                 return;
             }
-            // MAY THROW ERROR!
             if (current.getNext() == current.getPrev()) {
                 top = current.getNext();
                 return;
