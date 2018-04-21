@@ -1,69 +1,42 @@
 package com.danielcs88.tinkertailor;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 import java.util.function.Consumer;
 
-public class CircleList <E> implements List<E> {
+public class CircleList <E> {
 
     private int size;
-    private Node<E> top;
-    private Node<E> bottom;
+    private Node<E> middleNode;
 
-    @Override
     public int size() {
         return size;
     }
 
-    @Override
     public boolean isEmpty() {
         return size == 0;
     }
 
-    @Override
-    public boolean contains(Object o) {
-        return false;
-    }
-
-    @Override
     public Iterator<E> iterator() {
         return new CircleIterator();
     }
 
-    @Override
-    public Object[] toArray() {
-        return new Object[0];
-    }
-
-    @Override
-    public <T> T[] toArray(T[] a) {
-        return null;
-    }
-
-    @Override
     public boolean add(E elem) {
         Node<E> newNode = new Node<>(elem);
-        if (top == null) {
-            bottom = newNode;
-        } else {
-            newNode.setNext(top);
-            top.setPrev(newNode);
-            if (top.getNext() == null) {
-                newNode.setPrev(top);
-                top.setNext(newNode);
+        if (middleNode != null) {
+            newNode.next = middleNode;
+            if (middleNode.next != null) {
+                newNode.prev = middleNode.prev;
             } else {
-                newNode.setPrev(bottom);
-                bottom.setNext(newNode);
+                newNode.prev = middleNode;
+                middleNode.next = newNode;
             }
+            middleNode.prev = newNode;
         }
-        top = newNode;
+        middleNode = newNode;
         size ++;
         return true;
     }
 
-    @Override
     public boolean remove(Object o) {
         if (size == 0) return false;
         int index = 0;
@@ -78,64 +51,40 @@ public class CircleList <E> implements List<E> {
         return false;
     }
 
-    @Override
-    public boolean containsAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean addAll(Collection<? extends E> c) {
-        return false;
-    }
-
-    @Override
-    public boolean addAll(int index, Collection<? extends E> c) {
-        return false;
-    }
-
-    @Override
-    public boolean removeAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        return false;
-    }
-
-    @Override
     public void clear() {
-        Iterator<E> iter = iterator();
-        while (iter.hasNext()) {
-            iter.remove();
+        for (Node<E> node = middleNode; node != null;) {
+            Node<E> next = node.next;
+            node.elem = null;
+            node.next = null;
+            node.prev = null;
+            node = next;
         }
+        size = 0;
+        middleNode = null;
     }
 
-    @Override
     public void forEach(Consumer<? super E> action) {
-        Node<E> currentElement = top;
+        Node<E> currentElement = middleNode;
         for (int i = 0; i < size; i++) {
-            action.accept(currentElement.getElem());
-            currentElement = currentElement.getNext();
+            action.accept(currentElement.elem);
+            currentElement = currentElement.next;
         }
     }
 
-    private Iterator<E> setIteratorToIndex(int index) {
-        Iterator<E> iter = iterator();
+    private CircleIterator setIteratorToIndex(int index) {
+        CircleIterator iter = new CircleIterator();
         for (int i = 0; i < index; i++) {
             iter.next();
         }
         return iter;
     }
 
-    @Override
     public E get(int index) {
         if (size == 0) return null;
         Iterator<E> iter = setIteratorToIndex(index);
         return iter.next();
     }
 
-    @Override
     public E set(int index, E element) {
         if (size == 0) return null;
         Iterator<E> iter = setIteratorToIndex(index);
@@ -143,43 +92,14 @@ public class CircleList <E> implements List<E> {
         return element;
     }
 
-    @Override
     public void add(int index, E element) {
-
+        // TODO
     }
 
-    @Override
     public E remove(int index) {
-        if (size == 0) return null;
-        Iterator<E> iter = setIteratorToIndex(index);
-        iter.remove();
-        size --;
-        return null; // FIX THIS
-    }
-
-    @Override
-    public int indexOf(Object o) {
-        return 0;
-    }
-
-    @Override
-    public int lastIndexOf(Object o) {
-        return 0;
-    }
-
-    @Override
-    public ListIterator<E> listIterator() {
-        return null;
-    }
-
-    @Override
-    public ListIterator<E> listIterator(int index) {
-        return null;
-    }
-
-    @Override
-    public List<E> subList(int fromIndex, int toIndex) {
-        return null;
+        if (size == 0 || index >= size) throw new IndexOutOfBoundsException();
+        CircleIterator iter = setIteratorToIndex(index);
+        return iter.pull();
     }
 
     @Override
@@ -196,7 +116,12 @@ public class CircleList <E> implements List<E> {
 
     private final class CircleIterator implements Iterator<E> {
 
-        private Node<E> current = top;
+        private Node<E> current;
+        private Node<E> prev;
+
+        CircleIterator() {
+            current = middleNode;
+        }
 
         @Override
         public boolean hasNext() {
@@ -205,37 +130,48 @@ public class CircleList <E> implements List<E> {
 
         @Override
         public E next() {
-            if (current == null) return null;
-            E retVal = current.getElem();
-            current = current.getNext();
-            return retVal;
+            if (!hasNext()) throw new NoSuchElementException();
+            prev = current;
+            current = current.next;
+            return prev.elem;
         }
 
         public void set(E elem) {
-            current.setElem(elem);
+            if (prev == null) throw new IllegalStateException();
+            prev.elem = elem;
         }
 
         @Override
         public void remove() {
+            if (prev == null) throw new IllegalStateException();
+            removeNode(prev);
+        }
+
+        public E pull() {
+            if (prev == null) throw new IllegalStateException();
+            return removeNode(prev);
+        }
+
+        private E removeNode(Node<E> node) {
+            // MUST HANDLE 1-2 link removals
+            if (node == middleNode) {
+                middleNode = node.next;
+            }
+            node.prev.next = node.next;
+            node.next.prev = node.prev;
             size --;
-            /*
-            FIX THIS SHIT
-             */
-            if (current.getNext() == null) {
-                top = null;
-                current = null;
-                return;
-            }
-            if (current.getNext() == current.getPrev()) {
-                top = current.getNext();
-                current = null;
-                return;
-            }
-            current.getPrev().setNext(current.getNext());
-            current.getNext().setPrev(current.getPrev());
-            if (current == top) {top = current.getNext();}
-            if (current == bottom) {bottom = current.getPrev();}
-            current = current.getPrev();
+            return node.elem;
+        }
+    }
+
+    private class Node<T> {
+
+        private T elem;
+        private Node<T> next;
+        private Node<T> prev;
+
+        Node(T elem) {
+            this.elem = elem;
         }
     }
 }
