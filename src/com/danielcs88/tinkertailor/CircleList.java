@@ -3,10 +3,16 @@ package com.danielcs88.tinkertailor;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class CircleList <E> {
+public class CircleList<E> {
 
     private int size;
     private Node<E> middleNode;
+
+    public CircleList() {}
+
+    public CircleList(Iterable<E> iterable) {
+        iterable.forEach(this::add);
+    }
 
     public int size() {
         return size;
@@ -34,21 +40,24 @@ public class CircleList <E> {
             middleNode.prev = newNode;
         }
         middleNode = newNode;
-        size ++;
+        size++;
     }
 
-    public E remove(E elem) {
-        CircleIterator iter = new CircleIterator();
-        for (int i = 0; i < size; i++) {
-            if (iter.next().equals(elem)) {
-                return iter.pop();
-            }
-        }
-        return null;
+    public void insert(int index, E elem) {
+        checkIndexValidity(index);
+        if (index == 0) add(elem);
+
+        Node<E> newNode = new Node<>(elem);
+        CircleIterator iter = setIteratorToIndex(index - 1);
+        newNode.prev = iter.current.prev;
+        newNode.next = iter.current;
+        newNode.prev.next = newNode;
+        iter.current.prev = newNode;
+        size++;
     }
 
     public void clear() {
-        for (Node<E> node = middleNode; node != null;) {
+        for (Node<E> node = middleNode; node != null; ) {
             Node<E> next = node.next;
             unlink(node);
             node = next;
@@ -83,6 +92,16 @@ public class CircleList <E> {
         return iter.pop();
     }
 
+    public E removeElement(E elem) {
+        CircleIterator iter = new CircleIterator();
+        for (int i = 0; i < size; i++) {
+            if (iter.next().equals(elem)) {
+                return iter.pop();
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("[");
@@ -100,7 +119,7 @@ public class CircleList <E> {
         node.next = null;
         E retVal = node.elem;
         node.elem = null;
-        size --;
+        size--;
         return retVal;
     }
 
