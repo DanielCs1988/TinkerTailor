@@ -20,12 +20,13 @@ public class CircleList <E> {
         return new CircleIterator();
     }
 
-    public boolean add(E elem) {
+    public void add(E elem) {
         Node<E> newNode = new Node<>(elem);
         if (middleNode != null) {
             newNode.next = middleNode;
             if (middleNode.next != null) {
                 newNode.prev = middleNode.prev;
+                newNode.prev.next = newNode;
             } else {
                 newNode.prev = middleNode;
                 middleNode.next = newNode;
@@ -34,29 +35,22 @@ public class CircleList <E> {
         }
         middleNode = newNode;
         size ++;
-        return true;
     }
 
-    public boolean remove(Object o) {
-        if (size == 0) return false;
-        int index = 0;
-        Iterator<E> iter = iterator();
-        while (iter.hasNext()) {
-            if (iter.next() == o) {
-                iter.remove();
-                return true;
+    public E remove(E elem) {
+        CircleIterator iter = new CircleIterator();
+        for (int i = 0; i < size; i++) {
+            if (iter.next().equals(elem)) {
+                return iter.pop();
             }
-            if (index++ == size) break;
         }
-        return false;
+        return null;
     }
 
     public void clear() {
         for (Node<E> node = middleNode; node != null;) {
             Node<E> next = node.next;
-            node.elem = null;
-            node.next = null;
-            node.prev = null;
+            unlink(node);
             node = next;
         }
         size = 0;
@@ -71,35 +65,22 @@ public class CircleList <E> {
         }
     }
 
-    private CircleIterator setIteratorToIndex(int index) {
-        CircleIterator iter = new CircleIterator();
-        for (int i = 0; i < index; i++) {
-            iter.next();
-        }
-        return iter;
-    }
-
     public E get(int index) {
-        if (size == 0) return null;
-        Iterator<E> iter = setIteratorToIndex(index);
+        checkIndexValidity(index);
+        Iterator<E> iter = setIteratorToIndex(index - 1);
         return iter.next();
     }
 
-    public E set(int index, E element) {
-        if (size == 0) return null;
-        Iterator<E> iter = setIteratorToIndex(index);
-        ((CircleIterator)iter).set(element);
-        return element;
-    }
-
-    public void add(int index, E element) {
-        // TODO
+    public void set(int index, E element) {
+        checkIndexValidity(index);
+        CircleIterator iter = setIteratorToIndex(index);
+        iter.set(element);
     }
 
     public E remove(int index) {
-        if (size == 0 || index >= size) throw new IndexOutOfBoundsException();
+        checkIndexValidity(index);
         CircleIterator iter = setIteratorToIndex(index);
-        return iter.pull();
+        return iter.pop();
     }
 
     @Override
@@ -112,6 +93,27 @@ public class CircleList <E> {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    private E unlink(Node<E> node) {
+        node.prev = null;
+        node.next = null;
+        E retVal = node.elem;
+        node.elem = null;
+        size --;
+        return retVal;
+    }
+
+    private CircleIterator setIteratorToIndex(int index) {
+        CircleIterator iter = new CircleIterator();
+        for (int i = 0; i <= index; i++) {
+            iter.next();
+        }
+        return iter;
+    }
+
+    private void checkIndexValidity(int index) {
+        if (size == 0 || index >= size || index < 0) throw new IndexOutOfBoundsException();
     }
 
     private final class CircleIterator implements Iterator<E> {
@@ -144,23 +146,42 @@ public class CircleList <E> {
         @Override
         public void remove() {
             if (prev == null) throw new IllegalStateException();
+            Node<E> temp = prev.prev;
             removeNode(prev);
+            prev = temp;
         }
 
-        public E pull() {
+        public E pop() {
             if (prev == null) throw new IllegalStateException();
-            return removeNode(prev);
+            Node<E> temp = prev.prev;
+            E retVal = removeNode(prev);
+            prev = temp;
+            return retVal;
         }
 
         private E removeNode(Node<E> node) {
-            // MUST HANDLE 1-2 link removals
+            if (node.next == null) {
+                // When the last node is being removed, we just extract it's value and null out everything.
+                E retVal = node.elem;
+                node.elem = null;
+                middleNode = null;
+                current = null;
+                size = 0;
+                return retVal;
+            }
             if (node == middleNode) {
                 middleNode = node.next;
             }
-            node.prev.next = node.next;
-            node.next.prev = node.prev;
-            size --;
-            return node.elem;
+            if (node.next == node.prev) {
+                // When only 2 links remain, the links are nullified instead of redirecting them inwards.
+                node.next.next = null;
+                node.next.prev = null;
+            } else {
+                // Redirecting the surrounding links to skip the link being removed.
+                node.prev.next = node.next;
+                node.next.prev = node.prev;
+            }
+            return unlink(node);
         }
     }
 

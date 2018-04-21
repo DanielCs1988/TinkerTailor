@@ -20,7 +20,6 @@ public final class Game {
 
         for (int i = 0; i < rounds - 1; i++) {
             for (int j = 0; j < steps; j++) {
-                if (i == 0 && j == 0) continue;
                 playerIterator.next();
             }
             playerIterator.remove();
