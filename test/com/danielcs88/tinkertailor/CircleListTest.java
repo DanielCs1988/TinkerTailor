@@ -3,9 +3,7 @@ package com.danielcs88.tinkertailor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,6 +54,10 @@ class CircleListTest {
 
     @Test
     void forEach() {
+        List<Integer> consumer = new ArrayList<>();
+        list.forEach(consumer::add);
+        String expected = "[5, 4, 3, 2, 1]";
+        assertEquals(expected, consumer.toString());
     }
 
     @Test
